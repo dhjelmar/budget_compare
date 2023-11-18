@@ -107,7 +107,7 @@ dfmapped = dfmapped[['Index', 'Year', 'Date', 'InOrOut', 'AccountNum', 'Account 
 
 # %%
 ## write to Excel
-dfmapped.to_excel('convert_out.xlsx', index=False)
+dfmapped.to_excel('compare_out.xlsx', index=False)
 
 
 #%%
