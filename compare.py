@@ -4,78 +4,24 @@ import numpy as np
 from datetime import datetime as dt
 from modules.read_map import read_map
 from modules.mapit import mapit
+from modules.convert import convert
 import jellyfish  # approximate match
 
-def convert(file,
-            col_rename=['Account', 'Budget', 'Source_of_Funds', 'Recurring', 'Budget_old', 'Current_Balance', 'Difference', 'Comments'],
-            budget_columns=[1,4],
-            year=2024,
-            col_out   =['Year', 'Description', 'InOrOut', 'AccountNum', 'Account', 'Budget', 'File']):
-    ## READ OFFICE VERSION OF BUDGET DATA INTO DATAFRAME: df
-
-    ## read budget file and fix column names
-    df = pd.read_excel('input_files/' + file)
-    df.columns = col_rename
-
-    ## remove any row where Source_of_Funds is NaN
-    df = df.dropna(subset = ['Source_of_Funds'])
-
-    ## create another column with budget line item number only because database not consistent with descriptions
-    df['AccountNum'] = df.Account.str.extract('(^\d+a|^\d+)')
-    df['AccountNum'] = pd.to_numeric(df['AccountNum'])
-    ## type(df.iloc[0]['AccountNum'])
-
-    ## create column indicating whether account is income (In) or expense (Out)
-    df['InOrOut'] = np.where(df['AccountNum'] < 5000, 'In', 'Out')
-    df['AccountNum'] = df['AccountNum'].apply(str) # convert back to string for merge later
-    for i in budget_columns:
-        df.iloc[:,i] = np.where(df['InOrOut'] == 'In', df.iloc[:,i], -df.iloc[:,i])
-
-    ## add year and Description columns
-    df['Year'] = year
-    ## df['Description'] = dt.today().strftime('%Y-%m-%d')
-    today = dt.today().strftime('%m/%d/%y')
-    ## df['Description'] = dt.strptime(today, '%m/%d/%y')
-    df['Description'] = 'Budget ' + str(year) + ' (' + today + ')'
-
-    ## add file name column
-    df['File'] = file
-
-    ## move InOrOut and AccountNum to front of dataframe
-    df = df[col_out]
-
-    return df
-
-
 #%%
-## read prior years
+## read prior year or attempt budget info saved in budget_all.xlsx
 df = pd.read_excel('input_files/budget_all.xlsx')
 df = df.drop('Account (map)', axis=1)
 df = df.drop('Match Level', axis=1)
-#df = df.drop('Category', axis=1)
-#df = df.drop('SourceOfFunds', axis=1)
-
-## ## available columns
-## ## df = df[['Index', 'Year', 'Description', 'InOrOut', 'AccountNum', 'Account (budget)',
-## ##          'Account (map)', 'Match Level', 'Budget', 'Category', 'SourceOfFunds']]
-## df = df[['Year', 'Description', 'InOrOut', 'AccountNum', 'Account (map)', 'Budget', 'File']]
-
-## ## rename
-## df.columns = ['Year', 'Description', 'InOrOut', 'AccountNum', 'Account', 'Budget', 'File (budget)']
 
 #%%
+## Add new budget file to info saved in budget_all.xlsx
 
-
-#%%
-
+## use following to create list of several files to read
 file = []
 file.append('budget_2024_office_2023_11_15.xlsx')
 file.append('budget_2024_dave_2023_11_16.xlsx')
 
-file = 'budget_2024_dave_2023_11_17.xlsx'
-file = 'budget_2024_dave_2023_11_19.xlsx'
-file = 'budget_2024_dave_2023_11_16xx.xlsx'
-file = 'budget_2024_office_2023_11_15_plus40k.xlsx'
+## overwrite the above with the following to only work with one file
 file = 'budget_2024_office_2023_12_20.xlsx'
 
 # read each office formatted budget file and combine with df
@@ -113,12 +59,6 @@ for row in range(len(dfmapped)):
 dfmapped['Match Level'] = mismatched_dict
 
 #%%
-## ## reorder and keep selected columns
-## dfmapped['Index'] = list(range(1,len(dfmapped)+1))
-## dfmapped = dfmapped[['Index', 'Year', 'Description', 'InOrOut', 'AccountNum', 'Account (budget)', 'Account (map)', 'Match Level', 'Budget', 'Category', 'SourceOfFunds', 'Purpose', 'InternalExternal', 'File (budget)']]
-
-
-# %%
 ## reorder specific columns but keep all columns
 allcols = list(dfmapped)
 ## first = ['Year', 'Description', 'InOrOut', 'AccountNum', 'Account (budget)', 'Budget', 'Category', 'SourceOfFunds', 'Purpose', 'InternalExternal', 'File']
@@ -128,30 +68,8 @@ rest = [i for i in allcols if i not in first]
 dfmapped_new = pd.concat([dfmapped[first],dfmapped[rest]], axis=1)
 dfmapped = dfmapped_new
 
-
-# %%
+#%%
 ## write to Excel
 dfmapped.to_excel('compare_out.xlsx', index=False)
 
-
 #%%
-##################################################
-
-##%%
-### read prior year
-#import pandas as pd
-#df = pd.read_excel('input_files/budget_2023.xlsx')
-#df = df[['Account', 'Budget']]
-#
-##%%
-#df['AccountNum'] = df.Account.str.extract('(^\d+a|^\d+)')
-#df.columns = ['Account_2023', 'Budget_2023', 'AccountNum']
-#
-#
-##%%
-### merge dataframes (must be on sring)
-#dfnew = pd.merge(df, budget, how='outer', on='AccountNum')
-#dfnew = [['InOrOut', 'AccountNum', 'Account', 'Budget_2024', 'Account_2023', 'Budget_2023']]
-
-
-# %%
