@@ -1,20 +1,38 @@
 # %%
-def mapit(dataframe, map):
+def mapit(dfin, map):
     '''
-    pd.merge(dataframe, map, how='left', on='AccountNum')
+    pd.merge(dfin, map, how='left', on='AccountNum')
+
+    first need to drop any columns from dfin that I want taken from the map instead of the source files
     '''
 
     import pandas as pd
     import regex as re
 
-    df = dataframe.copy()
+    df = dfin.copy()
+
+    ## drop columns from df that should come from map instead
+    #dfnames = list(df)
+    #mapnames = list(map)
+    #allnames = dfnames + mapnames
+    #dups = list({x for x in allnames if allnames.count(x) > 1})
+    #
+    #for i in range(0,len(mapnames)):
+    #    budget = convert(file[i])
+    #    df = pd.concat([df, budget], axis=0)
+    #
+    #df = df.drop('InOrOut', axis=1)
+    #df = df.drop('Category', axis=1)
+    #df = df.drop('Purpose', axis=1)
+    #df = df.drop('SourceOfFunds', axis=1)
+
     df = pd.merge(df, map, how='left', on='AccountNum')
 
     ## create InOrOut column if it does not exist
     ## because it was in both df and map so merge created _x and _y copies
     df['InOrOut'] = df.get('InOrOut', df['InOrOut_y']) 
 
-    ## flag any line items from dataframe that are not in the map (e.g., so no Category assigned)
+    ## flag any line items from dfin that are not in the map (e.g., so no Category assigned)
     nan_values = df[df['Category'].isna()]
     if len(nan_values) != 0:
     #    print('')
@@ -35,13 +53,13 @@ def mapit(dataframe, map):
         if 'Account_y' in df:
             df.loc[df['Account_y'].isna(), 'Account_y'] = df['AccountNum']
 
-        ## set InOrOut based on dollar fields being positive or negative
-        dollarfields = [x for x in df.columns if re.findall(r'Amount',x)]
-        df['dollarsum'] = 0   # initialize new variable
-        for i in dollarfields:
-            df.loc[mask, 'dollarsum'] = df.loc[mask, 'dollarsum'] + df.loc[mask, i]
-        df.loc[(df.InOrOut.isna()) & (df.dollarsum >= 0), 'InOrOut'] = 'In' 
-        df.loc[(df.InOrOut.isna()) & (df.dollarsum <  0), 'InOrOut'] = 'Out' 
+        ## ## set InOrOut based on dollar fields being positive or negative
+        ## dollarfields = [x for x in df.columns if re.findall(r'Amount',x)]
+        ## df['dollarsum'] = 0   # initialize new variable
+        ## for i in dollarfields:
+        ##     df.loc[mask, 'dollarsum'] = df.loc[mask, 'dollarsum'] + df.loc[mask, i]
+        ## df.loc[(df.InOrOut.isna()) & (df.dollarsum >= 0), 'InOrOut'] = 'In' 
+        ## df.loc[(df.InOrOut.isna()) & (df.dollarsum <  0), 'InOrOut'] = 'Out' 
 
     return df, nan_values
 
