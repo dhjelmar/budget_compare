@@ -10,7 +10,7 @@ def convert(file,
             col_rename=['Account', 'Budget', 'Source_of_Funds', 'Recurring', 'Budget_old', 'Current_Balance', 'Difference', 'Comments'],
             budget_columns=[1,4],
             year=2024,
-            col_out   =['Year', 'Date', 'InOrOut', 'AccountNum', 'Account', 'Budget', 'File (budget)']):
+            col_out   =['Year', 'Description', 'InOrOut', 'AccountNum', 'Account', 'Budget', 'File']):
     ## READ OFFICE VERSION OF BUDGET DATA INTO DATAFRAME: df
 
     ## read budget file and fix column names
@@ -31,15 +31,15 @@ def convert(file,
     for i in budget_columns:
         df.iloc[:,i] = np.where(df['InOrOut'] == 'In', df.iloc[:,i], -df.iloc[:,i])
 
-    ## add year and date columns
+    ## add year and Description columns
     df['Year'] = year
-    ## df['Date'] = dt.today().strftime('%Y-%m-%d')
+    ## df['Description'] = dt.today().strftime('%Y-%m-%d')
     today = dt.today().strftime('%m/%d/%y')
-    ## df['Date'] = dt.strptime(today, '%m/%d/%y')
-    df['Date'] = 'Budget ' + str(year) + ' (' + today + ')'
+    ## df['Description'] = dt.strptime(today, '%m/%d/%y')
+    df['Description'] = 'Budget ' + str(year) + ' (' + today + ')'
 
     ## add file name column
-    df['File (budget)'] = file
+    df['File'] = file
 
     ## move InOrOut and AccountNum to front of dataframe
     df = df[col_out]
@@ -50,14 +50,18 @@ def convert(file,
 #%%
 ## read prior years
 df = pd.read_excel('input_files/budget_all.xlsx')
+df = df.drop('Account (map)', axis=1)
+df = df.drop('Match Level', axis=1)
+#df = df.drop('Category', axis=1)
+#df = df.drop('SourceOfFunds', axis=1)
 
-## available columns
-## df = df[['Index', 'Year', 'Date', 'InOrOut', 'AccountNum', 'Account (budget)',
-##          'Account (map)', 'Match Level', 'Budget', 'Category', 'SourceOfFunds']]
-df = df[['Year', 'Date', 'InOrOut', 'AccountNum', 'Account (map)', 'Budget', 'File']]
+## ## available columns
+## ## df = df[['Index', 'Year', 'Description', 'InOrOut', 'AccountNum', 'Account (budget)',
+## ##          'Account (map)', 'Match Level', 'Budget', 'Category', 'SourceOfFunds']]
+## df = df[['Year', 'Description', 'InOrOut', 'AccountNum', 'Account (map)', 'Budget', 'File']]
 
-## rename
-df.columns = ['Year', 'Date', 'InOrOut', 'AccountNum', 'Account', 'Budget', 'File (budget)']
+## ## rename
+## df.columns = ['Year', 'Description', 'InOrOut', 'AccountNum', 'Account', 'Budget', 'File (budget)']
 
 #%%
 
@@ -69,7 +73,10 @@ file.append('budget_2024_office_2023_11_15.xlsx')
 file.append('budget_2024_dave_2023_11_16.xlsx')
 
 file = 'budget_2024_dave_2023_11_17.xlsx'
-file = 'budget_2024_office_2023_11_18_cover_shortfall.xlsx'
+file = 'budget_2024_dave_2023_11_19.xlsx'
+file = 'budget_2024_dave_2023_11_16xx.xlsx'
+file = 'budget_2024_office_2023_11_15_plus40k.xlsx'
+file = 'budget_2024_office_2023_12_20.xlsx'
 
 # read each office formatted budget file and combine with df
 if type(file) == str:
@@ -82,15 +89,20 @@ else:
 
 #%% 
 ## map to categories
-map, map_duplicates = read_map()
+map, map_duplicates = read_map(sheet='2024')
 
+#%%
 ## first need to convert AccountNum to string for merge operation
 df['AccountNum'] = df['AccountNum'].apply(str)
 dfmapped, missing = mapit(df, map)
 
 #%%
-## rename columns from: ['Year', 'Date', 'InOrOut_x', 'AccountNum', 'Account_x', 'Budget', 'File (budget)', 'InOrOut_y', 'Category', 'SourceOfFunds', 'Account_y', 'InOrOut', 'dollarsum']
-dfmapped.columns = ['Year', 'Date', 'InOrOut (budget)', 'AccountNum', 'Account (budget)', 'Budget', 'File (budget)', 'InOrOut (map)', 'Category', 'SourceOfFunds', 'Account (map)', 'InOrOut', 'dollarsum']
+## drop and rename columns from: 
+dfmapped = dfmapped.drop('InOrOut_x', axis=1)
+dfmapped.rename(columns = {"Account_x": "Account (budget)"}, inplace = True) 
+dfmapped = dfmapped.drop('InOrOut_y', axis=1)
+dfmapped.rename(columns = {"Account_y": "Account (map)"}, inplace = True) 
+
 
 #%%
 ## Check actual for mismatched account names
@@ -101,9 +113,21 @@ for row in range(len(dfmapped)):
 dfmapped['Match Level'] = mismatched_dict
 
 #%%
-## reorder and keep selected columns
-dfmapped['Index'] = list(range(1,len(dfmapped)+1))
-dfmapped = dfmapped[['Index', 'Year', 'Date', 'InOrOut', 'AccountNum', 'Account (budget)', 'Account (map)', 'Match Level', 'Budget', 'Category', 'SourceOfFunds', 'File (budget)']]
+## ## reorder and keep selected columns
+## dfmapped['Index'] = list(range(1,len(dfmapped)+1))
+## dfmapped = dfmapped[['Index', 'Year', 'Description', 'InOrOut', 'AccountNum', 'Account (budget)', 'Account (map)', 'Match Level', 'Budget', 'Category', 'SourceOfFunds', 'Purpose', 'InternalExternal', 'File (budget)']]
+
+
+# %%
+## reorder specific columns but keep all columns
+allcols = list(dfmapped)
+## first = ['Year', 'Description', 'InOrOut', 'AccountNum', 'Account (budget)', 'Budget', 'Category', 'SourceOfFunds', 'Purpose', 'InternalExternal', 'File']
+first = ['Year', 'Description', 'InOrOut', 'AccountNum', 'Account (budget)', 'Account (map)', 'Match Level', 'Budget', 'Category', 'SourceOfFunds', 'File']
+first = ['Year', 'Description', 'InOrOut', 'AccountNum', 'Account (budget)', 'Account (map)', 'Match Level', 'Budget', 'File']
+rest = [i for i in allcols if i not in first]
+dfmapped_new = pd.concat([dfmapped[first],dfmapped[rest]], axis=1)
+dfmapped = dfmapped_new
+
 
 # %%
 ## write to Excel
