@@ -1,6 +1,7 @@
 # budget_compare
 
-## Creates an Excel file of historical and draft budget information in a format to enable pivot table comparisons. After running compare.py, create pivot tables. Alternately, copy compare_out.xlsx into first sheet of compare_pivot.xlsx and update pivot tables.
+## Description
+Creates an Excel file of historical and draft budget information in a format to enable pivot table comparisons. After running compare.py, create pivot tables. Alternately, copy compare_out.xlsx into first sheet of compare_pivot.xlsx and update pivot tables.
 
 ## Input files in folder input_files:
 
