@@ -18,11 +18,11 @@ df = df.drop('Match Level', axis=1)
 
 ## use following to create list of several files to read
 file = []
-file.append('budget_2024_office_2023_11_15.xlsx')
-file.append('budget_2024_dave_2023_11_16.xlsx')
+file.append('budget_2024_2023_12_asking_fixed.xlsx')
+file.append('budget_2024_2024_01_13_dave.xlsx')
 
 ## overwrite the above with the following to only work with one file
-file = 'budget_2024_office_2023_12_20.xlsx'
+file = 'budget_2024_2024_01_13_dave.xlsx'
 
 # read each office formatted budget file and combine with df
 if type(file) == str:
